@@ -25,6 +25,9 @@ Live demo: [spain-number-lookup.alex-just.workers.dev](https://spain-number-look
 | 6 | QuienHaLlamado | Secondary community signal |
 | 7 | Truecaller | Deep link (login wall) |
 
+Responses list sources most useful first: `found`, `blocked`, `failed`,
+then `empty`. Within a status, the table order is preserved.
+
 No paid APIs. Odd prefixes like `400…` are accepted.
 
 ## Setup

@@ -7,7 +7,19 @@ import { extractSpainNumber } from './normalize.ts';
 import { adapters as defaultAdapters } from './sources/index.ts';
 import type { SourceAdapter } from './sources/types.ts';
 import { buildSummary } from './summary.ts';
-import type { LookupError, LookupResult, SourceResult } from './types.ts';
+import type {
+  LookupError,
+  LookupResult,
+  SourceResult,
+  SourceStatus,
+} from './types.ts';
+
+const SOURCE_STATUS_RANK: Record<SourceStatus, number> = {
+  found: 0,
+  blocked: 1,
+  failed: 2,
+  empty: 3,
+};
 
 export type RunLookupOptions = {
   adapters?: SourceAdapter[];
@@ -78,11 +90,21 @@ export async function runLookup(
       ),
     );
 
+    const summary = buildSummary(settled);
+    const sources = settled
+      .map((source, index) => ({ source, index }))
+      .sort((a, b) => {
+        const rank =
+          SOURCE_STATUS_RANK[a.source.status] - SOURCE_STATUS_RANK[b.source.status];
+        return rank !== 0 ? rank : a.index - b.index;
+      })
+      .map(({ source }) => source);
+
     return {
       numberE164: normalized.numberE164,
       numberNational: normalized.numberNational,
-      summary: buildSummary(settled),
-      sources: settled,
+      summary,
+      sources,
     };
   } finally {
     overall.cancel();
