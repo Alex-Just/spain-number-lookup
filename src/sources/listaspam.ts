@@ -193,6 +193,7 @@ async function loadListaSpamProxy(
       { 'user-agent': PROXY_UA },
     );
     if (status < 200 || status >= 300) {
+      console.warn('ListaSpam proxy status', status);
       return null;
     }
     const parsed = parseListaSpamHtml(body);
@@ -200,7 +201,11 @@ async function loadListaSpamProxy(
       return null;
     }
     return parsed;
-  } catch {
+  } catch (error) {
+    console.warn(
+      'ListaSpam proxy failed',
+      error instanceof Error ? error.message : 'unknown',
+    );
     return null;
   }
 }
