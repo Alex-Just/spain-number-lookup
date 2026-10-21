@@ -1,0 +1,117 @@
+# Spain Number Lookup
+
+English PWA + Cloudflare Worker that accepts a shared or pasted Spain phone
+number, checks free Spanish lookup sources, and returns **one aggregated
+result page**.
+
+Live demo: [spain-number-lookup.alex-just.workers.dev](https://spain-number-lookup.alex-just.workers.dev)
+
+## What it does
+
+1. Paste a number, or share one from Android (Truecaller / dialer share sheet).
+2. Worker normalizes `+34` / spaced / `tel:` / Truecaller share text.
+3. Queries free sources in order and merges a summary with per-source status.
+4. Shows deep links so you can open the original page.
+
+### Sources (v1)
+
+| Order | Source | Notes |
+| --- | --- | --- |
+| 1 | ListaSpam | Spam labels / search activity |
+| 2 | Tellows | Risk score JSON |
+| 3 | Teledigo | Numbering assignment / operator |
+| 4 | ResponderONo | Community rating when a page exists |
+| 5 | OpenSpam | Deep link (no free parse API in v1) |
+| 6 | QuienHaLlamado | Secondary community signal |
+| 7 | Truecaller | Deep link (login wall) |
+
+No paid APIs. Odd prefixes like `400…` are accepted.
+
+## Setup
+
+```bash
+git clone https://github.com/Alex-Just/spain-number-lookup.git
+cd spain-number-lookup
+npm install
+npm test
+npm run typecheck
+npm run dev
+```
+
+Open [http://127.0.0.1:8787](http://127.0.0.1:8787) and look up e.g. `400300429`.
+
+## Deploy (Cloudflare free)
+
+```bash
+npx wrangler login   # once
+npm run deploy
+```
+
+Wrangler prints a `*.workers.dev` URL after deploy.
+
+## Code quality (Qlty + pre-push)
+
+```bash
+curl https://qlty.sh | sh   # once per machine
+git config core.hooksPath .githooks
+```
+
+`pre-push` runs `npm test`, `npm run typecheck`, then `qlty check` on the
+commits being pushed. Existing issues on the upstream branch do not block a
+push; new issues in changed files do. Bypass once with `git push --no-verify`
+if needed.
+
+`.qlty/qlty.toml` enables `biome`, `markdownlint`, `trufflehog`, and
+`osv-scanner`. Run the full tree with:
+
+```bash
+qlty check --all
+```
+
+## Android Share sheet
+
+1. Open the deployed URL in **Chrome** on Android.
+2. Install app / **Add to Home screen**.
+3. From a missed call, Share the number (Truecaller text is fine).
+4. Choose **Spain Number Lookup** / **ES Lookup**.
+
+The Web Share Target sends `text` (and optional `title` / `url`) into the PWA.
+The app **joins** those fields before lookup, so a Truecaller URL in `url` is
+not dropped when `text` is only boilerplate.
+
+## API
+
+```http
+GET /api/lookup?number=+34400300429
+```
+
+```http
+POST /api/lookup
+Content-Type: application/json
+
+{"number":"400300429"}
+```
+
+Responses: `200` lookup JSON, `400` invalid number, `429` rate limited
+(per IP, in-memory per isolate).
+
+## Project layout
+
+- `src/worker.ts` — HTTP entry
+- `src/normalize.ts` — share-text extraction
+- `src/lookup.ts` — fan-out orchestration
+- `src/sources/*` — per-site adapters
+- `public/*` — English PWA
+
+## Limits
+
+- ListaSpam / some sources may return `blocked` to datacenter IPs; deep links
+  still appear.
+- The lookup API is public and unauthenticated. Rate limits are light and
+  per-isolate — do not use this as a bulk API.
+- Third-party site HTML can change; adapters may need updates.
+- Changing the Worker hostname later means reinstalling the PWA.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0e7490" />
+    <meta
+      name="description"
+      content="Look up unknown Spain phone numbers across free community databases."
+    />
+    <title>Spain Number Lookup</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main>
+      <header class="top">
+        <div class="mark" aria-hidden="true"></div>
+        <p class="brand">Spain Number Lookup</p>
+      </header>
+
+      <h1>Who called?</h1>
+      <p class="lead">Paste or share a Spain number. One clean result from free sources.</p>
+
+      <form id="lookup-form" class="lookup">
+        <label for="number-input">Phone number</label>
+        <div class="field">
+          <input
+            id="number-input"
+            name="number"
+            type="text"
+            inputmode="tel"
+            autocomplete="tel"
+            placeholder="+34 600 000 000"
+            required
+          />
+          <button id="lookup-button" type="submit">Look up</button>
+        </div>
+        <p class="hint">
+          Android Chrome: install this site, then Share a missed-call number into the app.
+        </p>
+        <p id="status" class="status" aria-live="polite"></p>
+      </form>
+
+      <section id="result" class="result" aria-live="polite">
+        <div class="summary">
+          <p id="result-number" class="number"></p>
+          <p id="result-headline" class="headline"></p>
+          <div class="meta">
+            <span id="result-confidence" class="chip"></span>
+          </div>
+        </div>
+        <p class="section-label">Sources</p>
+        <ul id="result-sources" class="sources"></ul>
+      </section>
+    </main>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
