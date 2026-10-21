@@ -1,9 +1,17 @@
+# Needs repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
 name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
@@ -17,3 +25,25 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run typecheck
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+      - name: Smoke-check live app
+        env:
+          LIVE_URL: https://spain-number-lookup.alex-just.workers.dev/
+        run: |
+          set -eu
+          html="$(curl -fsS "$LIVE_URL")"
+          printf '%s' "$html" | grep -qi 'Spain Number Lookup\|ES Lookup\|lookup'
+          echo "Smoke check passed for $LIVE_URL"

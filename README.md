@@ -49,6 +49,21 @@ npm run deploy
 
 Wrangler prints a `*.workers.dev` URL after deploy.
 
+### CI deploy (GitHub Actions)
+
+Every push to `main` runs tests and typecheck, then deploys the Worker.
+Required repository secrets:
+
+1. `CLOUDFLARE_ACCOUNT_ID` — from `npx wrangler whoami`.
+2. `CLOUDFLARE_API_TOKEN` — create at
+   [API Tokens](https://dash.cloudflare.com/profile/api-tokens) with the
+   **Edit Cloudflare Workers** template, scoped to this account.
+
+```bash
+gh secret set CLOUDFLARE_ACCOUNT_ID
+gh secret set CLOUDFLARE_API_TOKEN
+```
+
 ## Code quality (Qlty + pre-push)
 
 ```bash
