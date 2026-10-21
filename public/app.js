@@ -71,9 +71,13 @@ function renderSummaryLink(data) {
 }
 
 function renderReviews(data) {
-  const source = data.sources.find(
-    (item) => Array.isArray(item.reviews) && item.reviews.length > 0,
-  );
+  const primary = data.sources.find((item) => item.id === data.summary.sourceId);
+  const source =
+    Array.isArray(primary?.reviews) && primary.reviews.length > 0
+      ? primary
+      : data.sources.find(
+          (item) => Array.isArray(item.reviews) && item.reviews.length > 0,
+        );
   reviewListEl.replaceChildren();
   if (!source) {
     reviewsEl.hidden = true;
@@ -90,6 +94,8 @@ function renderReviews(data) {
     const metaBits = [];
     if (review.score !== undefined) {
       metaBits.push(`${review.score}/9`);
+    } else if (review.rating) {
+      metaBits.push(review.rating);
     }
     if (review.author) {
       metaBits.push(review.author);

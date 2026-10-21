@@ -12,12 +12,14 @@ export async function fetchText(
   url: string,
   signal: AbortSignal,
   fetchImpl: FetchLike = fetch,
+  headers: Record<string, string> = {},
 ): Promise<{ status: number; body: string }> {
   const response = await fetchImpl(url, {
     signal,
     headers: {
       'user-agent': DEFAULT_USER_AGENT,
       accept: 'text/html,application/json,*/*',
+      ...headers,
     },
     redirect: 'follow',
   });

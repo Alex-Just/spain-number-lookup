@@ -1,5 +1,6 @@
 import { SOURCE_IDS } from '../constants.ts';
 import { formatCount } from '../format.ts';
+import { htmlToText } from '../html.ts';
 import type { SourceResult, SourceReview } from '../types.ts';
 import { fetchText, safeLookup, type FetchLike } from './http.ts';
 import type { SourceAdapter } from './types.ts';
@@ -72,50 +73,6 @@ function extractClassifications(tellows: TellowsPayload['tellows']): string[] {
   return classifications;
 }
 
-const HTML_ENTITIES: Record<string, string> = {
-  amp: '&',
-  quot: '"',
-  apos: "'",
-  lt: '<',
-  gt: '>',
-  nbsp: ' ',
-  aacute: 'á',
-  eacute: 'é',
-  iacute: 'í',
-  oacute: 'ó',
-  uacute: 'ú',
-  ntilde: 'ñ',
-  uuml: 'ü',
-  iexcl: '¡',
-  iquest: '¿',
-  laquo: '«',
-  raquo: '»',
-  lrm: '',
-  rlm: '',
-};
-
-function fromCodePoint(value: number): string {
-  return Number.isInteger(value) && value >= 0 && value <= 0x10ffff
-    ? String.fromCodePoint(value)
-    : '';
-}
-
-function decodeEntities(text: string): string {
-  return text
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) =>
-      fromCodePoint(Number.parseInt(hex, 16)),
-    )
-    .replace(/&#(\d+);/g, (_, dec: string) => fromCodePoint(Number(dec)))
-    .replace(/&([a-z]+);/gi, (match, name: string) => HTML_ENTITIES[name.toLowerCase()] ?? match);
-}
-
-function cleanText(html: string): string {
-  return decodeEntities(html.replace(/<[^>]*>/g, ' '))
-    .replace(/[\u200e\u200f]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 export type TellowsHtml = {
   label?: string;
   reviews: SourceReview[];
@@ -127,8 +84,8 @@ function parseReviewBlock(block: string): SourceReview | null {
   const metaHtml =
     /<div[^>]*class="[^"]*\bcomment-meta\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i.exec(block)?.[1] ?? '';
 
-  const lead = cleanText(leadHtml);
-  const text = cleanText(textHtml) || lead;
+  const lead = htmlToText(leadHtml);
+  const text = htmlToText(textHtml) || lead;
   if (text === '') {
     return null;
   }
@@ -136,12 +93,12 @@ function parseReviewBlock(block: string): SourceReview | null {
   const score = /\brealscore\s+realscore([1-9])\b/i.exec(block)?.[1];
   const authorHtml = /<i[^>]*>([\s\S]*?)<\/i>\s*report[oó]/i.exec(block)?.[1];
   const classification = /como\s+([^,.;]+?)(?:\s+con el n[úu]mero|$)/i.exec(lead)?.[1]?.trim();
-  const meta = cleanText(metaHtml);
+  const meta = htmlToText(metaHtml);
   const date = meta.split(/\s+v[ií]a\s+/i)[0]?.trim();
 
   return {
     text,
-    ...(authorHtml ? { author: cleanText(authorHtml) } : {}),
+    ...(authorHtml ? { author: htmlToText(authorHtml) } : {}),
     ...(date ? { date } : {}),
     ...(score ? { score: Number(score) } : {}),
     ...(classification ? { classification } : {}),
@@ -153,7 +110,7 @@ export function parseTellowsHtml(body: string): TellowsHtml {
   const callerMatch = /<span[^>]*class="[^"]*\bcallerId\b[^"]*"[^>]*>([\s\S]*?)<\/span>/i.exec(
     body,
   );
-  const label = callerMatch?.[1] ? cleanLabel(cleanText(callerMatch[1])) : undefined;
+  const label = callerMatch?.[1] ? cleanLabel(htmlToText(callerMatch[1])) : undefined;
 
   const reviews: SourceReview[] = [];
   const listStart = body.search(/<ol[^>]*\bid="singlecomments"[^>]*>/i);

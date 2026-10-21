@@ -17,8 +17,8 @@ Live demo: [spain-number-lookup.alex-just.workers.dev](https://spain-number-look
 
 | Order | Source | Notes |
 | --- | --- | --- |
-| 1 | ListaSpam | Spam labels / search activity |
-| 2 | Tellows | Risk score JSON |
+| 1 | ListaSpam | Owner, community reports, spam labels |
+| 2 | Tellows | Score, owner, community reports |
 | 3 | Teledigo | Numbering assignment / operator |
 | 4 | ResponderONo | Community rating when users have rated the number |
 | 5 | OpenSpam | Deep link (no free parse API in v1) |
@@ -126,8 +126,10 @@ score, classification, and text).
 
 ## Limits
 
-- ListaSpam, Teledigo, and some other sources may return `blocked` to
-  datacenter IPs; deep links still appear.
+- ListaSpam and Teledigo may return `blocked` to datacenter IPs. ListaSpam
+  retries the public page through Google Translate's proxy (the number is
+  sent to that proxy); if the retry also fails, the row stays blocked and
+  the deep link remains.
 - The lookup API is public and unauthenticated. Rate limits are light and
   per-isolate — do not use this as a bulk API.
 - Third-party site HTML can change; adapters may need updates.

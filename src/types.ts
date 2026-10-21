@@ -7,6 +7,7 @@ export type SourceReview = {
   author?: string;
   date?: string;
   score?: number;
+  rating?: string;
   classification?: string;
 };
 
