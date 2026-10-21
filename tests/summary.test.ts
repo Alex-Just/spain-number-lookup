@@ -32,6 +32,7 @@ describe('buildSummary', () => {
 
     expect(summary.headline).toContain('Llamadas comerciales');
     expect(summary.confidence).toBe('medium');
+    expect(summary.sourceId).toBe('listaspam');
   });
 
   it('uses Tellows when ListaSpam has no label and comments exist', () => {
@@ -69,6 +70,7 @@ describe('buildSummary', () => {
     expect(summary.confidence).toBe('medium');
     expect(summary.headline).toContain('Lucía Llanos Fisioterapia');
     expect(summary.headline).toContain('2 comments');
+    expect(summary.sourceId).toBe('tellows');
   });
 
   it('does not headline a zero-comment Tellows name when it is the only found source', () => {
@@ -87,6 +89,7 @@ describe('buildSummary', () => {
     expect(summary.confidence).toBe('none');
     expect(summary.headline.toLowerCase()).toMatch(/no useful matches/);
     expect(summary.headline).not.toContain('PETRA');
+    expect(summary.sourceId).toBeUndefined();
   });
 
   it('attributes another source instead of the zero-comment Tellows name', () => {
@@ -110,6 +113,7 @@ describe('buildSummary', () => {
     expect(summary.confidence).toBe('low');
     expect(summary.headline).toBe('ResponderONo: NEGATIVA');
     expect(summary.headline).not.toContain('PETRA');
+    expect(summary.sourceId).toBe('responderono');
   });
 
   it('uses Tellows comment count as the community signal without a label', () => {
@@ -146,6 +150,22 @@ describe('buildSummary', () => {
     expect(summary.headline).not.toContain('1 comments');
   });
 
+  it('uses Tellows reviews when the comment count is missing', () => {
+    const summary = buildSummary([
+      source({
+        id: SOURCE_IDS.TELLOWS,
+        name: 'Tellows',
+        status: 'found',
+        score: 6,
+        label: 'Acme',
+        reviews: [{ text: 'spam call' }],
+      }),
+    ]);
+
+    expect(summary.confidence).toBe('medium');
+    expect(summary.headline).toBe('Tellows: Acme · score 6');
+  });
+
   it('ignores display-only detail when structured comments are absent', () => {
     const summary = buildSummary([
       source({
@@ -179,6 +199,7 @@ describe('buildSummary', () => {
 
     expect(summary.headline).toContain('AIRE NETWORKS');
     expect(summary.confidence).toBe('low');
+    expect(summary.sourceId).toBe('teledigo');
   });
 
   it('does not headline score-only Tellows when it is the only found source', () => {
@@ -208,6 +229,7 @@ describe('buildSummary', () => {
 
     expect(summary.headline).toContain('AIRE NETWORKS');
     expect(summary.confidence).toBe('low');
+    expect(summary.sourceId).toBe('teledigo');
   });
 
   it('returns none when all empty failed or blocked', () => {

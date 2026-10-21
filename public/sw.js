@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spain-number-lookup-shell-v5';
+const CACHE_NAME = 'spain-number-lookup-shell-v6';
 const SHELL = ['/', '/index.html', '/styles.css', '/app.js', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {

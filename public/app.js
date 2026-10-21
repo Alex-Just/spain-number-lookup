@@ -13,9 +13,14 @@ const input = document.querySelector('#number-input');
 const submit = document.querySelector('#lookup-button');
 const statusEl = document.querySelector('#status');
 const resultEl = document.querySelector('#result');
+const summaryEl = document.querySelector('#result-summary');
+const summaryHintEl = document.querySelector('#result-summary-hint');
 const numberEl = document.querySelector('#result-number');
 const headlineEl = document.querySelector('#result-headline');
 const confidenceEl = document.querySelector('#result-confidence');
+const reviewsEl = document.querySelector('#reviews');
+const reviewsLabelEl = document.querySelector('#reviews-label');
+const reviewListEl = document.querySelector('#review-list');
 const sourcesEl = document.querySelector('#result-sources');
 
 function setStatus(message, isError = false, isLoading = false) {
@@ -51,12 +56,67 @@ function appendText(parent, tag, className, text) {
   return el;
 }
 
+function renderSummaryLink(data) {
+  const primary = data.sources.find((source) => source.id === data.summary.sourceId);
+  if (primary?.url) {
+    summaryEl.href = primary.url;
+    summaryEl.classList.add('linked');
+    summaryHintEl.textContent = `Open ${primary.name} ↗`;
+    summaryHintEl.hidden = false;
+  } else {
+    summaryEl.removeAttribute('href');
+    summaryEl.classList.remove('linked');
+    summaryHintEl.hidden = true;
+  }
+}
+
+function renderReviews(data) {
+  const source = data.sources.find(
+    (item) => Array.isArray(item.reviews) && item.reviews.length > 0,
+  );
+  reviewListEl.replaceChildren();
+  if (!source) {
+    reviewsEl.hidden = true;
+    return;
+  }
+
+  reviewsEl.hidden = false;
+  reviewsLabelEl.textContent = `Recent reports from ${source.name}`;
+
+  for (const review of source.reviews.slice(0, 3)) {
+    const li = document.createElement('li');
+    li.className = 'review';
+
+    const metaBits = [];
+    if (review.score !== undefined) {
+      metaBits.push(`${review.score}/9`);
+    }
+    if (review.author) {
+      metaBits.push(review.author);
+    }
+    if (review.date) {
+      metaBits.push(review.date);
+    }
+    if (metaBits.length > 0) {
+      appendText(li, 'p', 'review-meta', metaBits.join(' · '));
+    }
+    if (review.classification) {
+      appendText(li, 'p', 'review-tag', review.classification);
+    }
+    appendText(li, 'p', 'review-text', review.text);
+
+    reviewListEl.appendChild(li);
+  }
+}
+
 function renderResult(data) {
   resultEl.classList.add('visible');
   numberEl.textContent = data.numberE164;
   headlineEl.textContent = data.summary.headline;
   confidenceEl.textContent = data.summary.confidence;
   confidenceEl.className = `chip ${data.summary.confidence}`;
+  renderSummaryLink(data);
+  renderReviews(data);
   sourcesEl.replaceChildren();
 
   for (const source of data.sources) {

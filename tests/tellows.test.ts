@@ -2,12 +2,15 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { parseTellowsJson } from '../src/sources/tellows.ts';
+import {
+  createTellowsAdapter,
+  parseTellowsHtml,
+  parseTellowsJson,
+} from '../src/sources/tellows.ts';
 
-const fixture = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), 'fixtures/tellows.json'),
-  'utf8',
-);
+const fixtures = join(dirname(fileURLToPath(import.meta.url)), 'fixtures');
+const fixture = readFileSync(join(fixtures, 'tellows.json'), 'utf8');
+const htmlFixture = readFileSync(join(fixtures, 'tellows-917220650.html'), 'utf8');
 
 describe('parseTellowsJson', () => {
   it('reads score from tellows JSON body', () => {
@@ -154,5 +157,74 @@ describe('parseTellowsJson', () => {
     );
     expect(capped.label).toHaveLength(80);
     expect(capped.label?.endsWith('…')).toBe(true);
+  });
+});
+
+describe('parseTellowsHtml', () => {
+  it('extracts the caller id and recent reports', () => {
+    const parsed = parseTellowsHtml(htmlFixture);
+
+    expect(parsed.label).toBe('Correos. Envios Just Fab');
+    expect(parsed.reviews).toHaveLength(2);
+    expect(parsed.reviews[0]).toMatchObject({
+      score: 9,
+      classification: 'Acoso telefónico',
+      text: 'se hacen pasar por correos',
+    });
+    expect(parsed.reviews[0]?.author).toBeUndefined();
+    expect(parsed.reviews[0]?.date).toContain('9/8/24');
+    expect(parsed.reviews[1]).toMatchObject({
+      author: 'Javier',
+      score: 5,
+      classification: 'Número fiable',
+      text: 'grupo Correos',
+    });
+  });
+
+  it('returns only the caller id when there are no comments', () => {
+    const parsed = parseTellowsHtml(
+      '<span class="callerId">Acme</span><ol id="singlecomments"></ol>',
+    );
+
+    expect(parsed).toEqual({ label: 'Acme', reviews: [] });
+  });
+});
+
+describe('tellows adapter', () => {
+  it('merges the JSON score with the HTML caller id and reviews', async () => {
+    const json = JSON.stringify({
+      tellows: { score: '7', comments: '5', searches: '1581' },
+    });
+    const adapter = createTellowsAdapter(async (url) =>
+      url.includes('json=1')
+        ? new Response(json, { status: 200 })
+        : new Response(htmlFixture, { status: 200 }),
+    );
+
+    const result = await adapter.lookup('917220650', new AbortController().signal);
+
+    expect(result.status).toBe('found');
+    expect(result.label).toBe('Correos. Envios Just Fab');
+    expect(result.comments).toBe(5);
+    expect(result.reviews).toHaveLength(2);
+    expect(result.detail).toContain('5 comments');
+    expect(result.url).toContain('/num/917220650');
+  });
+
+  it('keeps the JSON result when the HTML page fails', async () => {
+    const json = JSON.stringify({
+      tellows: { score: '7', comments: '5', searches: '1581' },
+    });
+    const adapter = createTellowsAdapter(async (url) =>
+      url.includes('json=1')
+        ? new Response(json, { status: 200 })
+        : new Response('blocked', { status: 403 }),
+    );
+
+    const result = await adapter.lookup('917220650', new AbortController().signal);
+
+    expect(result.status).toBe('found');
+    expect(result.label).toBeUndefined();
+    expect(result.reviews).toBeUndefined();
   });
 });

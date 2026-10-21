@@ -68,13 +68,18 @@
       </form>
 
       <section id="result" class="result" aria-live="polite">
-        <div class="summary">
+        <a id="result-summary" class="summary" target="_blank" rel="noopener noreferrer">
           <p id="result-number" class="number"></p>
           <p id="result-headline" class="headline"></p>
           <div class="meta">
             <span id="result-confidence" class="chip"></span>
           </div>
-        </div>
+          <p id="result-summary-hint" class="summary-hint" hidden></p>
+        </a>
+        <section id="reviews" class="reviews" hidden>
+          <p id="reviews-label" class="section-label">Recent reports</p>
+          <ul id="review-list" class="review-list"></ul>
+        </section>
         <p class="section-label">Sources</p>
         <ul id="result-sources" class="sources"></ul>
       </section>

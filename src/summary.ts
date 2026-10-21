@@ -8,7 +8,7 @@ function byId(sources: SourceResult[], id: string): SourceResult | undefined {
 
 /** A directory name or score alone is not a community report; comments are. */
 function tellowsHasCommunitySignal(tellows: SourceResult | undefined): boolean {
-  return (tellows?.comments ?? 0) > 0;
+  return (tellows?.comments ?? 0) > 0 || (tellows?.reviews?.length ?? 0) > 0;
 }
 
 export function buildSummary(sources: SourceResult[]): LookupSummary {
@@ -24,6 +24,7 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     return {
       headline: `ListaSpam: ${listaspam.label}`,
       confidence: 'medium',
+      sourceId: SOURCE_IDS.LISTASPAM,
       notes,
     };
   }
@@ -36,10 +37,13 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     if (tellows.score !== undefined) {
       parts.push(`score ${tellows.score}`);
     }
-    parts.push(formatCount(tellows.comments ?? 0, 'comment', 'comments'));
+    if (tellows.comments !== undefined) {
+      parts.push(formatCount(tellows.comments, 'comment', 'comments'));
+    }
     return {
       headline: `Tellows: ${parts.join(' · ')}`,
       confidence: 'medium',
+      sourceId: SOURCE_IDS.TELLOWS,
       notes,
     };
   }
@@ -48,6 +52,7 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     return {
       headline: teledigo.detail,
       confidence: 'low',
+      sourceId: SOURCE_IDS.TELEDIGO,
       notes,
     };
   }
@@ -75,6 +80,7 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     return {
       headline: text,
       confidence: 'low',
+      sourceId: first?.id,
       notes,
     };
   }

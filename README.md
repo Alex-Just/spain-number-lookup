@@ -112,6 +112,10 @@ Responses: `200` lookup JSON, `400` invalid number or request body,
 `?number=` is present), `429` rate limited (per IP, in-memory per
 isolate), `500` unexpected error with a JSON `error` field.
 
+`summary.sourceId` points at the source behind the headline; sources may
+include `reviews` (recent Tellows community reports with author, date,
+score, classification, and text).
+
 ## Project layout
 
 - `src/worker.ts` — HTTP entry
