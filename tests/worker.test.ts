@@ -210,6 +210,98 @@ describe('request body limit', () => {
     expect(calls).toEqual([]);
   });
 
+  it('rejects an oversized body even when the query already has a number', async () => {
+    const { worker, calls } = makeWorker();
+
+    const response = await worker.fetch(
+      request('/api/lookup?number=600000000', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: 'x'.repeat(MAX_LOOKUP_BODY_BYTES + 1),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: 'Request body too large' });
+    expect(calls).toEqual([]);
+  });
+
+  it('rejects an oversized body with an unsupported content type', async () => {
+    const { worker, calls } = makeWorker();
+
+    const response = await worker.fetch(
+      request('/api/lookup', {
+        method: 'POST',
+        headers: { 'content-type': 'text/plain' },
+        body: 'x'.repeat(MAX_LOOKUP_BODY_BYTES + 1),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(413);
+    expect(calls).toEqual([]);
+  });
+
+  it('rejects from Content-Length before reading the body', async () => {
+    const { worker } = makeWorker();
+
+    const response = await worker.fetch(
+      request('/api/lookup', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'content-length': String(MAX_LOOKUP_BODY_BYTES + 1),
+        },
+        body: '{}',
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(413);
+  });
+
+  it('rejects an invalid Content-Length with 400', async () => {
+    const { worker } = makeWorker();
+
+    const response = await worker.fetch(
+      request('/api/lookup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'content-length': '-1' },
+        body: '{}',
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Invalid request body' });
+  });
+
+  it('still counts streamed bytes when Content-Length lies', async () => {
+    const { worker, calls } = makeWorker();
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode('{"text":"'));
+        controller.enqueue(encoder.encode('x'.repeat(MAX_LOOKUP_BODY_BYTES)));
+        controller.enqueue(encoder.encode('"}'));
+        controller.close();
+      },
+    });
+
+    const streamed = new Request('https://app.test/api/lookup', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'content-length': '10' },
+      body: stream,
+      duplex: 'half',
+    } as RequestInit);
+
+    const response = await worker.fetch(streamed, env);
+
+    expect(response.status).toBe(413);
+    expect(calls).toEqual([]);
+  });
+
   it('rejects an oversized streamed body with no Content-Length', async () => {
     const { worker, calls } = makeWorker();
     const encoder = new TextEncoder();
@@ -234,6 +326,29 @@ describe('request body limit', () => {
     expect(response.status).toBe(413);
     expect(await response.json()).toEqual({ error: 'Request body too large' });
     expect(calls).toEqual([]);
+  });
+});
+
+describe('invalid lookups', () => {
+  it('returns 400 when the lookup reports an invalid number', async () => {
+    const worker = createWorker({
+      limiter: new RateLimiter({ maxRequests: 1000 }),
+      lookup: async () => ({ error: 'Invalid Spain phone number' }),
+    });
+
+    const response = await worker.fetch(request('/api/lookup?number=123'), env);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Invalid Spain phone number' });
+  });
+
+  it('returns 400 when a GET has no number', async () => {
+    const { worker } = makeWorker();
+
+    const response = await worker.fetch(request('/api/lookup'), env);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Invalid Spain phone number' });
   });
 });
 

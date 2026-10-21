@@ -12,8 +12,47 @@ type TellowsPayload = {
     score?: string | number;
     comments?: string | number;
     searches?: string | number;
+    numberDetails?: {
+      name?: string;
+      category?: string;
+    };
+    callerTypes?: {
+      caller?: Array<{ name?: string }>;
+    };
   };
 };
+
+const GENERIC_LABELS = new Set(['desconocido', 'unknown']);
+
+function cleanLabel(value: string | undefined): string | undefined {
+  const trimmed = value?.trim() ?? '';
+  if (trimmed === '' || GENERIC_LABELS.has(trimmed.toLowerCase())) {
+    return undefined;
+  }
+  return trimmed;
+}
+
+/** The line owner's name is the strongest "who called" signal Tellows gives us. */
+function extractLabel(tellows: TellowsPayload['tellows']): string | undefined {
+  const fromName = cleanLabel(tellows?.numberDetails?.name);
+  if (fromName) {
+    return fromName;
+  }
+  const fromCategory = cleanLabel(tellows?.numberDetails?.category);
+  if (fromCategory) {
+    return fromCategory;
+  }
+  const callers = tellows?.callerTypes?.caller;
+  if (Array.isArray(callers)) {
+    for (const caller of callers) {
+      const name = cleanLabel(caller?.name);
+      if (name) {
+        return name;
+      }
+    }
+  }
+  return undefined;
+}
 
 export function buildTellowsUrl(national9: string): string {
   return `https://www.tellows.es/num/${national9}`;
@@ -45,19 +84,19 @@ export function parseTellowsJson(body: string): Partial<SourceResult> {
     return { status: 'empty' };
   }
 
-  const detailParts: string[] = [`score ${score}`];
-  if (Number.isFinite(comments)) {
-    detailParts.push(`${comments} comments`);
-  }
+  const detailParts: string[] = [`score ${score}`, `${comments} comments`];
   if (Number.isFinite(searches)) {
     detailParts.push(`${searches} searches`);
   }
+
+  const label = extractLabel(data.tellows);
 
   // Score alone is still a found row; summary only elevates when comments/label exist.
   return {
     status: 'found',
     score,
     comments,
+    ...(label === undefined ? {} : { label }),
     detail: detailParts.join(' · '),
   };
 }

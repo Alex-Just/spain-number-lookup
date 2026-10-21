@@ -58,11 +58,34 @@ jobs:
           test "$invalid_status" = "400"
           jq -e 'has("error")' /tmp/invalid.json >/dev/null
 
+          malformed_status="$(curl -sS -o /tmp/malformed.json -w '%{http_code}' \
+            --retry 5 --retry-delay 2 --retry-all-errors --max-time 20 \
+            -X POST -H 'content-type: application/json' --data '{"number":' \
+            "$BASE_URL/api/lookup")"
+          test "$malformed_status" = "400"
+          jq -e '.error == "Invalid request body"' /tmp/malformed.json >/dev/null
+
+          head -c 9000 /dev/zero | tr '\0' 'x' > /tmp/oversized-body.json
+          oversized_status="$(curl -sS -o /tmp/oversized.json -w '%{http_code}' \
+            --retry 5 --retry-delay 2 --retry-all-errors --max-time 20 \
+            -X POST -H 'content-type: application/json' \
+            --data-binary @/tmp/oversized-body.json "$BASE_URL/api/lookup")"
+          test "$oversized_status" = "413"
+          jq -e '.error == "Request body too large"' /tmp/oversized.json >/dev/null
+
           lookup_status="$(curl -sS -o /tmp/lookup.json -w '%{http_code}' \
             --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 \
             "$BASE_URL/api/lookup?number=600000000")"
           test "$lookup_status" = "200"
           jq -e '.numberNational == "600000000" and (.sources | type == "array") and (.sources | length > 0)' \
             /tmp/lookup.json >/dev/null
+
+          share_status="$(curl -sS -o /tmp/share.json -w '%{http_code}' \
+            --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 \
+            -X POST -F 'text=Missed call' \
+            -F 'url=https://truecaller.com/search/es/34400300429' \
+            "$BASE_URL/api/lookup")"
+          test "$share_status" = "200"
+          jq -e '.numberNational == "400300429" and (.sources | length > 0)' /tmp/share.json >/dev/null
 
           echo "Smoke checks passed for $BASE_URL"

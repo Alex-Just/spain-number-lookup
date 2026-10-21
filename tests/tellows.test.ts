@@ -33,4 +33,48 @@ describe('parseTellowsJson', () => {
     const parsed = parseTellowsJson(JSON.stringify({ tellows: { score: '6' } }));
     expect(parsed.comments).toBe(0);
   });
+
+  it('uses the business name as the label', () => {
+    const parsed = parseTellowsJson(
+      JSON.stringify({
+        tellows: {
+          score: '7',
+          comments: '2',
+          numberDetails: { name: 'Lucía Llanos Fisioterapia', category: '' },
+          callerTypes: { caller: [{ name: 'Desconocido', count: '2' }] },
+        },
+      }),
+    );
+
+    expect(parsed.label).toBe('Lucía Llanos Fisioterapia');
+  });
+
+  it('falls back to a category when there is no name', () => {
+    const parsed = parseTellowsJson(
+      JSON.stringify({
+        tellows: {
+          score: '7',
+          comments: '2',
+          numberDetails: { name: '', category: 'Telemarketing' },
+        },
+      }),
+    );
+
+    expect(parsed.label).toBe('Telemarketing');
+  });
+
+  it('ignores the generic Desconocido caller label', () => {
+    const parsed = parseTellowsJson(
+      JSON.stringify({
+        tellows: {
+          score: '5',
+          comments: '0',
+          numberDetails: { name: 'Desconocido', category: '' },
+          callerTypes: { caller: [{ name: 'Desconocido', count: '2' }] },
+        },
+      }),
+    );
+
+    expect(parsed.label).toBeUndefined();
+  });
 });

@@ -108,7 +108,9 @@ Content-Type: application/json
 ```
 
 Responses: `200` lookup JSON, `400` invalid number or request body,
-`413` body over 8 KiB, `429` rate limited (per IP, in-memory per isolate).
+`405` method not allowed, `413` POST body over 8 KiB (checked even when
+`?number=` is present), `429` rate limited (per IP, in-memory per
+isolate), `500` unexpected error with a JSON `error` field.
 
 ## Project layout
 

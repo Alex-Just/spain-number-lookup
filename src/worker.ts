@@ -133,20 +133,22 @@ async function readLookupInput(request: Request, url: URL): Promise<ReadInputRes
     title: url.searchParams.get('title'),
     url: url.searchParams.get('url'),
   });
+  if (request.method !== 'POST') {
+    return fromQuery === '' ? invalidNumber() : { ok: true, value: fromQuery };
+  }
+
+  // Cap every POST body, even when the query already supplies the number.
+  const body = await readBody(request);
+  if (!body.ok) {
+    return body;
+  }
+
   if (fromQuery !== '') {
     return { ok: true, value: fromQuery };
   }
 
-  if (request.method !== 'POST') {
-    return invalidNumber();
-  }
-
   const contentType = request.headers.get('content-type') ?? '';
   if (contentType.includes('application/json')) {
-    const body = await readBody(request);
-    if (!body.ok) {
-      return body;
-    }
     let payload: unknown;
     try {
       payload = JSON.parse(new TextDecoder().decode(body.bytes));
@@ -164,10 +166,6 @@ async function readLookupInput(request: Request, url: URL): Promise<ReadInputRes
     contentType.includes('application/x-www-form-urlencoded') ||
     contentType.includes('multipart/form-data')
   ) {
-    const body = await readBody(request);
-    if (!body.ok) {
-      return body;
-    }
     let form: FormData;
     try {
       form = await new Request('https://lookup.invalid/', {
