@@ -107,8 +107,8 @@ Content-Type: application/json
 {"number":"400300429"}
 ```
 
-Responses: `200` lookup JSON, `400` invalid number, `429` rate limited
-(per IP, in-memory per isolate).
+Responses: `200` lookup JSON, `400` invalid number or request body,
+`413` body over 8 KiB, `429` rate limited (per IP, in-memory per isolate).
 
 ## Project layout
 
