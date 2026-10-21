@@ -34,7 +34,7 @@ describe('buildSummary', () => {
     expect(summary.confidence).toBe('medium');
   });
 
-  it('uses Tellows when ListaSpam has no label and comments/label exist', () => {
+  it('uses Tellows when ListaSpam has no label and comments exist', () => {
     const summary = buildSummary([
       source({ id: SOURCE_IDS.LISTASPAM, name: 'ListaSpam', status: 'empty' }),
       source({
@@ -42,13 +42,50 @@ describe('buildSummary', () => {
         name: 'Tellows',
         status: 'found',
         score: 7,
+        comments: 2,
         label: 'Telemarketing',
         detail: '2 comments',
       }),
     ]);
 
     expect(summary.headline).toMatch(/Tellows|Telemarketing|7/);
+    expect(summary.headline).toContain('2 comments');
     expect(summary.confidence).toBe('medium');
+  });
+
+  it('headlines a named Tellows caller when comments exist', () => {
+    const summary = buildSummary([
+      source({
+        id: SOURCE_IDS.TELLOWS,
+        name: 'Tellows',
+        status: 'found',
+        score: 7,
+        comments: 2,
+        label: 'Lucía Llanos Fisioterapia',
+        detail: 'score 7 · 2 comments · 38 searches',
+      }),
+    ]);
+
+    expect(summary.confidence).toBe('medium');
+    expect(summary.headline).toContain('Lucía Llanos Fisioterapia');
+    expect(summary.headline).toContain('2 comments');
+  });
+
+  it('does not headline a zero-comment Tellows directory name', () => {
+    const summary = buildSummary([
+      source({
+        id: SOURCE_IDS.TELLOWS,
+        name: 'Tellows',
+        status: 'found',
+        score: 2,
+        comments: 0,
+        label: 'PETRA PARRAGA BAESA',
+        detail: 'score 2 · 0 comments · 1 searches',
+      }),
+    ]);
+
+    expect(summary.confidence).toBe('none');
+    expect(summary.headline.toLowerCase()).toMatch(/no useful matches/);
   });
 
   it('uses Tellows comment count as the community signal without a label', () => {

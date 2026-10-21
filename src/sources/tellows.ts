@@ -13,45 +13,61 @@ type TellowsPayload = {
     comments?: string | number;
     searches?: string | number;
     numberDetails?: {
-      name?: string;
-      category?: string;
+      name?: unknown;
+      category?: unknown;
     };
     callerTypes?: {
-      caller?: Array<{ name?: string }>;
+      caller?: Array<{ name?: unknown; count?: string | number }>;
     };
   };
 };
 
 const GENERIC_LABELS = new Set(['desconocido', 'unknown']);
+const MAX_LABEL_LENGTH = 80;
 
-function cleanLabel(value: string | undefined): string | undefined {
-  const trimmed = value?.trim() ?? '';
-  if (trimmed === '' || GENERIC_LABELS.has(trimmed.toLowerCase())) {
+function cleanLabel(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
     return undefined;
   }
-  return trimmed;
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (normalized === '' || GENERIC_LABELS.has(normalized.toLowerCase())) {
+    return undefined;
+  }
+  if (normalized.length <= MAX_LABEL_LENGTH) {
+    return normalized;
+  }
+  return `${normalized.slice(0, MAX_LABEL_LENGTH - 1).trimEnd()}…`;
 }
 
-/** The line owner's name is the strongest "who called" signal Tellows gives us. */
+/** Owner name or category; callerTypes are classifications, not identities. */
 function extractLabel(tellows: TellowsPayload['tellows']): string | undefined {
-  const fromName = cleanLabel(tellows?.numberDetails?.name);
-  if (fromName) {
-    return fromName;
-  }
-  const fromCategory = cleanLabel(tellows?.numberDetails?.category);
-  if (fromCategory) {
-    return fromCategory;
-  }
+  return (
+    cleanLabel(tellows?.numberDetails?.name) ?? cleanLabel(tellows?.numberDetails?.category)
+  );
+}
+
+/** Keep every community classification, with its count, in the source detail. */
+function extractClassifications(tellows: TellowsPayload['tellows']): string[] {
   const callers = tellows?.callerTypes?.caller;
-  if (Array.isArray(callers)) {
-    for (const caller of callers) {
-      const name = cleanLabel(caller?.name);
-      if (name) {
-        return name;
-      }
-    }
+  if (!Array.isArray(callers)) {
+    return [];
   }
-  return undefined;
+  const seen = new Set<string>();
+  const classifications: string[] = [];
+  for (const caller of callers) {
+    const name = cleanLabel(caller?.name);
+    if (name === undefined) {
+      continue;
+    }
+    const count = Number(caller?.count);
+    const text = Number.isFinite(count) && count > 0 ? `${name} (${count})` : name;
+    if (seen.has(text)) {
+      continue;
+    }
+    seen.add(text);
+    classifications.push(text);
+  }
+  return classifications;
 }
 
 export function buildTellowsUrl(national9: string): string {
@@ -88,6 +104,7 @@ export function parseTellowsJson(body: string): Partial<SourceResult> {
   if (Number.isFinite(searches)) {
     detailParts.push(`${searches} searches`);
   }
+  detailParts.push(...extractClassifications(data.tellows));
 
   const label = extractLabel(data.tellows);
 

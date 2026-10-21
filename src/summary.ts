@@ -5,12 +5,9 @@ function byId(sources: SourceResult[], id: string): SourceResult | undefined {
   return sources.find((source) => source.id === id);
 }
 
-/** A Tellows score alone is not a report; it needs a label or real comments. */
+/** A directory name or score alone is not a community report; comments are. */
 function tellowsHasCommunitySignal(tellows: SourceResult | undefined): boolean {
-  if (!tellows) {
-    return false;
-  }
-  return Boolean(tellows.label) || (tellows.comments ?? 0) > 0;
+  return (tellows?.comments ?? 0) > 0;
 }
 
 export function buildSummary(sources: SourceResult[]): LookupSummary {
@@ -38,6 +35,7 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     if (tellows.score !== undefined) {
       parts.push(`score ${tellows.score}`);
     }
+    parts.push(`${tellows.comments ?? 0} comments`);
     return {
       headline: `Tellows: ${parts.join(' · ')}`,
       confidence: 'medium',
@@ -57,7 +55,7 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     if (source.status !== 'found') {
       return false;
     }
-    // Score-only Tellows is too weak to headline "who called".
+    // Tellows without comments is too weak to headline "who called".
     if (source.id === SOURCE_IDS.TELLOWS) {
       return tellowsHasCommunitySignal(source);
     }

@@ -69,7 +69,8 @@ jobs:
           oversized_status="$(curl -sS -o /tmp/oversized.json -w '%{http_code}' \
             --retry 5 --retry-delay 2 --retry-all-errors --max-time 20 \
             -X POST -H 'content-type: application/json' \
-            --data-binary @/tmp/oversized-body.json "$BASE_URL/api/lookup")"
+            --data-binary @/tmp/oversized-body.json \
+            "$BASE_URL/api/lookup?number=600000000")"
           test "$oversized_status" = "413"
           jq -e '.error == "Request body too large"' /tmp/oversized.json >/dev/null
 

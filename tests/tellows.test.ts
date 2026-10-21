@@ -77,4 +77,69 @@ describe('parseTellowsJson', () => {
 
     expect(parsed.label).toBeUndefined();
   });
+
+  it('keeps caller classifications in detail instead of the label', () => {
+    const parsed = parseTellowsJson(
+      JSON.stringify({
+        tellows: {
+          score: '8',
+          comments: '1',
+          searches: '4',
+          numberDetails: { name: '', category: '' },
+          callerTypes: {
+            caller: [
+              { name: 'Concurso', count: '1' },
+              { name: 'Estafa', count: '1' },
+            ],
+          },
+        },
+      }),
+    );
+
+    expect(parsed.label).toBeUndefined();
+    expect(parsed.detail).toContain('Concurso (1)');
+    expect(parsed.detail).toContain('Estafa (1)');
+  });
+
+  it('ignores non-string names without losing the row', () => {
+    const parsed = parseTellowsJson(
+      JSON.stringify({
+        tellows: {
+          score: '6',
+          comments: '1',
+          numberDetails: { name: 123 },
+          callerTypes: { caller: [{ name: 'Estafa', count: '1' }] },
+        },
+      }),
+    );
+
+    expect(parsed.status).toBe('found');
+    expect(parsed.label).toBeUndefined();
+    expect(parsed.detail).toContain('Estafa (1)');
+  });
+
+  it('normalizes whitespace and caps long labels', () => {
+    const messy = parseTellowsJson(
+      JSON.stringify({
+        tellows: {
+          score: '6',
+          comments: '1',
+          numberDetails: { name: '  Estanco   Madrid\n344  ' },
+        },
+      }),
+    );
+    expect(messy.label).toBe('Estanco Madrid 344');
+
+    const capped = parseTellowsJson(
+      JSON.stringify({
+        tellows: {
+          score: '6',
+          comments: '1',
+          numberDetails: { name: 'A'.repeat(200) },
+        },
+      }),
+    );
+    expect(capped.label).toHaveLength(80);
+    expect(capped.label?.endsWith('…')).toBe(true);
+  });
 });

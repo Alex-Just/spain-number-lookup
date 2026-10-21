@@ -261,13 +261,29 @@ describe('request body limit', () => {
     expect(response.status).toBe(413);
   });
 
-  it('rejects an invalid Content-Length with 400', async () => {
+  it('rejects a negative Content-Length with 400', async () => {
     const { worker } = makeWorker();
 
     const response = await worker.fetch(
       request('/api/lookup', {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'content-length': '-1' },
+        body: '{}',
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Invalid request body' });
+  });
+
+  it('rejects a non-numeric Content-Length with 400', async () => {
+    const { worker } = makeWorker();
+
+    const response = await worker.fetch(
+      request('/api/lookup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'content-length': 'abc' },
         body: '{}',
       }),
       env,
