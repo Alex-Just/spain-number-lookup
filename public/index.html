@@ -10,7 +10,8 @@
     />
     <title>Spain Number Lookup</title>
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/icon-192.png" sizes="192x192" type="image/png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,7 +24,23 @@
   <body>
     <main>
       <header class="top">
-        <div class="mark" aria-hidden="true"></div>
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 192 192" focusable="false">
+            <defs>
+              <linearGradient id="mark-gradient" x1="24" y1="16" x2="170" y2="180" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#1193b2" />
+                <stop offset="0.55" stop-color="#0e7490" />
+                <stop offset="1" stop-color="#083344" />
+              </linearGradient>
+            </defs>
+            <rect width="192" height="192" fill="url(#mark-gradient)" />
+            <line x1="121" y1="119" x2="147" y2="145" stroke="#fff" stroke-width="15" stroke-linecap="round" />
+            <circle cx="92" cy="90" r="40" fill="none" stroke="#fff" stroke-width="12" />
+            <g transform="translate(61.4 59.4) scale(2.55)" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+            </g>
+          </svg>
+        </div>
         <p class="brand">Spain Number Lookup</p>
       </header>
 
