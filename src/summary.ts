@@ -49,7 +49,17 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     };
   }
 
-  const found = sources.filter((source) => source.status === 'found');
+  const found = sources.filter((source) => {
+    if (source.status !== 'found') {
+      return false;
+    }
+    // Score-only Tellows is too weak to headline "who called".
+    if (source.id === SOURCE_IDS.TELLOWS) {
+      return Boolean(source.label) ||
+        (typeof source.detail === 'string' && /\b[1-9]\d*\s+comments\b/i.test(source.detail));
+    }
+    return true;
+  });
   if (found.length > 0) {
     const first = found[0];
     const text = first?.label ?? first?.detail ?? first?.name ?? 'Match found';

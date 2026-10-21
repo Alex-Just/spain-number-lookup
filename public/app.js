@@ -5,6 +5,9 @@ const STATUS_LABELS = {
   blocked: 'Blocked',
 };
 
+/** Prefer POST when share text is long enough that query strings may break. */
+const POST_LOOKUP_MIN_CHARS = 180;
+
 const form = document.querySelector('#lookup-form');
 const input = document.querySelector('#number-input');
 const submit = document.querySelector('#lookup-button');
@@ -21,25 +24,21 @@ function setStatus(message, isError = false, isLoading = false) {
   statusEl.classList.toggle('loading', isLoading);
 }
 
-function combineShareParams(fields) {
-  const number = (fields.number || '').trim();
-  if (number) {
-    return number;
-  }
-  const parts = [fields.text, fields.title, fields.url]
-    .map((value) => (value || '').trim())
-    .filter(Boolean);
-  return [...new Set(parts)].join('\n');
-}
-
-function readShareParams() {
+function readShareFields() {
   const params = new URLSearchParams(window.location.search);
-  return combineShareParams({
+  return {
     number: params.get('number'),
     text: params.get('text'),
     title: params.get('title'),
     url: params.get('url'),
-  });
+  };
+}
+
+function previewShareInput(fields) {
+  return [fields.number, fields.text, fields.title, fields.url]
+    .map((value) => (value || '').trim())
+    .filter(Boolean)
+    .join('\n');
 }
 
 function appendText(parent, tag, className, text) {
@@ -100,9 +99,9 @@ function renderResult(data) {
   }
 }
 
-async function lookup(raw) {
-  const trimmed = raw.trim();
-  if (!trimmed) {
+async function requestLookup(payload) {
+  const rawPreview = typeof payload === 'string' ? payload : previewShareInput(payload);
+  if (!rawPreview.trim()) {
     setStatus('Enter a Spain phone number.', true);
     return;
   }
@@ -112,13 +111,35 @@ async function lookup(raw) {
   setStatus('Checking free Spain sources…', false, true);
 
   try {
-    const response = await fetch(`/api/lookup?number=${encodeURIComponent(trimmed)}`);
+    let response;
+    if (typeof payload === 'string' && payload.trim().length < POST_LOOKUP_MIN_CHARS) {
+      response = await fetch(`/api/lookup?number=${encodeURIComponent(payload.trim())}`);
+    } else {
+      const body =
+        typeof payload === 'string'
+          ? { number: payload.trim() }
+          : {
+              number: payload.number || undefined,
+              text: payload.text || undefined,
+              title: payload.title || undefined,
+              url: payload.url || undefined,
+            };
+      response = await fetch('/api/lookup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    }
+
     const data = await response.json();
     if (!response.ok) {
       setStatus(data.error || 'Lookup failed.', true);
       return;
     }
     setStatus('Done.');
+    if (data.numberE164) {
+      input.value = data.numberE164;
+    }
     renderResult(data);
   } catch {
     setStatus('Network error. Try again.', true);
@@ -129,13 +150,14 @@ async function lookup(raw) {
 
 form.addEventListener('submit', (event) => {
   event.preventDefault();
-  lookup(input.value);
+  requestLookup(input.value);
 });
 
-const shared = readShareParams();
-if (shared) {
-  input.value = shared;
-  lookup(shared);
+const shareFields = readShareFields();
+const sharedPreview = previewShareInput(shareFields);
+if (sharedPreview) {
+  input.value = sharedPreview;
+  requestLookup(shareFields);
 }
 
 if ('serviceWorker' in navigator) {

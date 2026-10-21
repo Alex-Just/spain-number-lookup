@@ -72,6 +72,21 @@ describe('buildSummary', () => {
     expect(summary.confidence).toBe('low');
   });
 
+  it('does not headline score-only Tellows when it is the only found source', () => {
+    const summary = buildSummary([
+      source({
+        id: SOURCE_IDS.TELLOWS,
+        name: 'Tellows',
+        status: 'found',
+        score: 5,
+        detail: 'score 5 · 0 comments · 1 searches',
+      }),
+    ]);
+
+    expect(summary.confidence).toBe('none');
+    expect(summary.headline.toLowerCase()).toMatch(/no useful matches/);
+  });
+
   it('falls back to Teledigo operator with low confidence', () => {
     const summary = buildSummary([
       source({

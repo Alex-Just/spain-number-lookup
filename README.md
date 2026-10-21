@@ -105,8 +105,8 @@ Responses: `200` lookup JSON, `400` invalid number, `429` rate limited
 
 ## Limits
 
-- ListaSpam / some sources may return `blocked` to datacenter IPs; deep links
-  still appear.
+- ListaSpam, Teledigo, and some other sources may return `blocked` to
+  datacenter IPs; deep links still appear.
 - The lookup API is public and unauthenticated. Rate limits are light and
   per-isolate — do not use this as a bulk API.
 - Third-party site HTML can change; adapters may need updates.
