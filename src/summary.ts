@@ -5,6 +5,14 @@ function byId(sources: SourceResult[], id: string): SourceResult | undefined {
   return sources.find((source) => source.id === id);
 }
 
+/** A Tellows score alone is not a report; it needs a label or real comments. */
+function tellowsHasCommunitySignal(tellows: SourceResult | undefined): boolean {
+  if (!tellows) {
+    return false;
+  }
+  return Boolean(tellows.label) || (tellows.comments ?? 0) > 0;
+}
+
 export function buildSummary(sources: SourceResult[]): LookupSummary {
   const notes: string[] = [];
   const listaspam = byId(sources, SOURCE_IDS.LISTASPAM);
@@ -22,11 +30,7 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     };
   }
 
-  const tellowsHasCommunitySignal =
-    Boolean(tellows?.label) ||
-    (typeof tellows?.detail === 'string' && /\b[1-9]\d*\s+comments\b/i.test(tellows.detail));
-
-  if (tellows?.status === 'found' && tellowsHasCommunitySignal) {
+  if (tellows?.status === 'found' && tellowsHasCommunitySignal(tellows)) {
     const parts: string[] = [];
     if (tellows.label) {
       parts.push(tellows.label);
@@ -55,8 +59,7 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     }
     // Score-only Tellows is too weak to headline "who called".
     if (source.id === SOURCE_IDS.TELLOWS) {
-      return Boolean(source.label) ||
-        (typeof source.detail === 'string' && /\b[1-9]\d*\s+comments\b/i.test(source.detail));
+      return tellowsHasCommunitySignal(source);
     }
     return true;
   });

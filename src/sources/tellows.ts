@@ -37,7 +37,8 @@ export function parseTellowsJson(body: string): Partial<SourceResult> {
   const scoreRaw = data.tellows?.score;
   const score =
     typeof scoreRaw === 'number' ? scoreRaw : Number.parseInt(String(scoreRaw ?? ''), 10);
-  const comments = Number(data.tellows?.comments ?? 0);
+  const commentsRaw = Number(data.tellows?.comments ?? 0);
+  const comments = Number.isFinite(commentsRaw) ? commentsRaw : 0;
   const searches = Number(data.tellows?.searches ?? 0);
 
   if (!Number.isFinite(score) || score < MIN_USEFUL_SCORE || score > MAX_USEFUL_SCORE) {
@@ -56,6 +57,7 @@ export function parseTellowsJson(body: string): Partial<SourceResult> {
   return {
     status: 'found',
     score,
+    comments,
     detail: detailParts.join(' · '),
   };
 }

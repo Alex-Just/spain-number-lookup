@@ -34,6 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy Worker
+        id: deploy
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -41,9 +42,27 @@ jobs:
           command: deploy
       - name: Smoke-check live app
         env:
-          LIVE_URL: https://spain-number-lookup.alex-just.workers.dev/
+          BASE_URL: ${{ steps.deploy.outputs.deployment-url }}
         run: |
-          set -eu
-          html="$(curl -fsS "$LIVE_URL")"
-          printf '%s' "$html" | grep -qi 'Spain Number Lookup\|ES Lookup\|lookup'
-          echo "Smoke check passed for $LIVE_URL"
+          set -euo pipefail
+          BASE_URL="${BASE_URL%/}"
+          test -n "$BASE_URL"
+          echo "Checking $BASE_URL"
+
+          shell_html="$(curl -fsS --retry 5 --retry-delay 2 --retry-all-errors --max-time 20 "$BASE_URL/")"
+          printf '%s' "$shell_html" | grep -qi '<title>Spain Number Lookup</title>'
+
+          invalid_status="$(curl -sS -o /tmp/invalid.json -w '%{http_code}' \
+            --retry 5 --retry-delay 2 --retry-all-errors --max-time 20 \
+            "$BASE_URL/api/lookup?number=not-a-number")"
+          test "$invalid_status" = "400"
+          jq -e 'has("error")' /tmp/invalid.json >/dev/null
+
+          lookup_status="$(curl -sS -o /tmp/lookup.json -w '%{http_code}' \
+            --retry 5 --retry-delay 2 --retry-all-errors --max-time 30 \
+            "$BASE_URL/api/lookup?number=600000000")"
+          test "$lookup_status" = "200"
+          jq -e '.numberNational == "600000000" and (.sources | type == "array") and (.sources | length > 0)' \
+            /tmp/lookup.json >/dev/null
+
+          echo "Smoke checks passed for $BASE_URL"

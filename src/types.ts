@@ -9,6 +9,7 @@ export type SourceResult = {
   label?: string;
   detail?: string;
   score?: number;
+  comments?: number;
   url: string;
 };
 

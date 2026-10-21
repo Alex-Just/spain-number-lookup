@@ -21,4 +21,16 @@ describe('parseTellowsJson', () => {
     expect(parsed.score).toBe(5);
     expect(parsed.status).toBe('found');
   });
+
+  it('exposes the comment count as a structured field', () => {
+    const parsed = parseTellowsJson(
+      JSON.stringify({ tellows: { score: '6', comments: '2', searches: '9' } }),
+    );
+    expect(parsed.comments).toBe(2);
+  });
+
+  it('defaults comments to zero when the field is missing', () => {
+    const parsed = parseTellowsJson(JSON.stringify({ tellows: { score: '6' } }));
+    expect(parsed.comments).toBe(0);
+  });
 });

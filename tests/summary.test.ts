@@ -51,6 +51,52 @@ describe('buildSummary', () => {
     expect(summary.confidence).toBe('medium');
   });
 
+  it('uses Tellows comment count as the community signal without a label', () => {
+    const summary = buildSummary([
+      source({ id: SOURCE_IDS.LISTASPAM, name: 'ListaSpam', status: 'empty' }),
+      source({
+        id: SOURCE_IDS.TELLOWS,
+        name: 'Tellows',
+        status: 'found',
+        score: 7,
+        comments: 2,
+        detail: 'score 7 · 2 comments · 3 searches',
+      }),
+    ]);
+
+    expect(summary.confidence).toBe('medium');
+    expect(summary.headline).toContain('Tellows');
+  });
+
+  it('treats a single comment as enough community signal', () => {
+    const summary = buildSummary([
+      source({
+        id: SOURCE_IDS.TELLOWS,
+        name: 'Tellows',
+        status: 'found',
+        score: 6,
+        comments: 1,
+        detail: 'score 6 · 1 comments',
+      }),
+    ]);
+
+    expect(summary.confidence).toBe('medium');
+  });
+
+  it('ignores display-only detail when structured comments are absent', () => {
+    const summary = buildSummary([
+      source({
+        id: SOURCE_IDS.TELLOWS,
+        name: 'Tellows',
+        status: 'found',
+        score: 7,
+        detail: 'score 7 · 2 comments',
+      }),
+    ]);
+
+    expect(summary.confidence).toBe('none');
+  });
+
   it('does not let score-only Tellows drive medium confidence', () => {
     const summary = buildSummary([
       source({
