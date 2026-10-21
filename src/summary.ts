@@ -1,4 +1,5 @@
 import { SOURCE_IDS, SUMMARY_NO_MATCHES_HEADLINE } from './constants.ts';
+import { formatCount } from './format.ts';
 import type { LookupSummary, SourceResult } from './types.ts';
 
 function byId(sources: SourceResult[], id: string): SourceResult | undefined {
@@ -35,7 +36,7 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     if (tellows.score !== undefined) {
       parts.push(`score ${tellows.score}`);
     }
-    parts.push(`${tellows.comments ?? 0} comments`);
+    parts.push(formatCount(tellows.comments ?? 0, 'comment', 'comments'));
     return {
       headline: `Tellows: ${parts.join(' · ')}`,
       confidence: 'medium',
@@ -63,7 +64,14 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
   });
   if (found.length > 0) {
     const first = found[0];
-    const text = first?.label ?? first?.detail ?? first?.name ?? 'Match found';
+    let text = 'Match found';
+    if (first?.label) {
+      text = `${first.name}: ${first.label}`;
+    } else if (first?.detail) {
+      text = first.detail;
+    } else if (first?.name) {
+      text = first.name;
+    }
     return {
       headline: text,
       confidence: 'low',

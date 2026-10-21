@@ -239,6 +239,7 @@ button:disabled {
   font-weight: 600;
   letter-spacing: -0.015em;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .meta {

@@ -118,6 +118,14 @@ describe('parseTellowsJson', () => {
     expect(parsed.detail).toContain('Estafa (1)');
   });
 
+  it('uses singular counts for one comment and one search', () => {
+    const parsed = parseTellowsJson(
+      JSON.stringify({ tellows: { score: '6', comments: '1', searches: '1' } }),
+    );
+
+    expect(parsed.detail).toBe('1 comment · 1 search');
+  });
+
   it('normalizes whitespace and caps long labels', () => {
     const messy = parseTellowsJson(
       JSON.stringify({

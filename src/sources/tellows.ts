@@ -1,4 +1,5 @@
 import { SOURCE_IDS } from '../constants.ts';
+import { formatCount } from '../format.ts';
 import type { SourceResult } from '../types.ts';
 import { safeLookup, type FetchLike } from './http.ts';
 import type { SourceAdapter } from './types.ts';
@@ -100,15 +101,15 @@ export function parseTellowsJson(body: string): Partial<SourceResult> {
     return { status: 'empty' };
   }
 
-  const detailParts: string[] = [`score ${score}`, `${comments} comments`];
+  const detailParts: string[] = [formatCount(comments, 'comment', 'comments')];
   if (Number.isFinite(searches)) {
-    detailParts.push(`${searches} searches`);
+    detailParts.push(formatCount(searches, 'search', 'searches'));
   }
   detailParts.push(...extractClassifications(data.tellows));
 
   const label = extractLabel(data.tellows);
 
-  // Score alone is still a found row; summary only elevates when comments/label exist.
+  // Score alone is still a found row; summary only elevates when comments exist.
   return {
     status: 'found',
     score,

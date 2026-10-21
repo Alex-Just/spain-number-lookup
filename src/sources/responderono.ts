@@ -4,25 +4,44 @@ import { safeLookup, type FetchLike } from './http.ts';
 import type { SourceAdapter } from './types.ts';
 
 const SOURCE_NAME = 'ResponderONo';
-const RATING =
-  /(NEGATIVA|POSITIVA|NEUTRAL|NEGATIVE|POSITIVE)/i;
+const RATED_AS = /m(?:á|&aacute;)s evaluado como\s+(negativa|positiva|neutral)\b([^.<]*)/i;
+
+function metaDescription(html: string): string | null {
+  for (const tag of html.matchAll(/<meta\b[^>]*>/gi)) {
+    const text = tag[0];
+    if (!/name\s*=\s*["']description["']/i.test(text)) {
+      continue;
+    }
+    const content = /content\s*=\s*["']([^"']*)["']/i.exec(text);
+    if (content?.[1]) {
+      return content[1];
+    }
+  }
+  return null;
+}
 
 export function buildResponderONoUrl(national9: string): string {
   return `https://www.responderono.es/numero-de-telefono/${national9}`;
 }
 
 export function parseResponderONoHtml(body: string): Partial<SourceResult> | null {
-  const rating = RATING.exec(body);
-  if (!rating?.[1]) {
-    // Page exists but no clear rating text — still treat as empty signal.
+  const description = metaDescription(body);
+  const rating = description === null ? null : RATED_AS.exec(description);
+  const ratingValue = rating?.[1];
+
+  if (ratingValue === undefined) {
+    // Page exists but no rating summary; CSS classes and form labels are not ratings.
     if (/Evaluaciones/i.test(body) || /número de teléfono/i.test(body)) {
       return { status: 'empty' };
     }
     return null;
   }
+
+  const summary = rating?.[2]?.trim();
   return {
     status: 'found',
-    label: rating[1].toUpperCase(),
+    label: ratingValue.toUpperCase(),
+    ...(summary ? { detail: summary } : {}),
   };
 }
 
