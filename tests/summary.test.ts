@@ -62,7 +62,7 @@ describe('buildSummary', () => {
         score: 7,
         comments: 2,
         label: 'Lucía Llanos Fisioterapia',
-        detail: 'score 7 · 2 comments · 38 searches',
+        detail: '2 comments · 38 searches',
       }),
     ]);
 
@@ -80,7 +80,7 @@ describe('buildSummary', () => {
         score: 2,
         comments: 0,
         label: 'PETRA PARRAGA BAESA',
-        detail: 'score 2 · 0 comments · 1 searches',
+        detail: '0 comments · 1 search',
       }),
     ]);
 
@@ -121,7 +121,7 @@ describe('buildSummary', () => {
         status: 'found',
         score: 7,
         comments: 2,
-        detail: 'score 7 · 2 comments · 3 searches',
+        detail: '2 comments · 3 searches',
       }),
     ]);
 
@@ -137,7 +137,7 @@ describe('buildSummary', () => {
         status: 'found',
         score: 6,
         comments: 1,
-        detail: 'score 6 · 1 comments',
+        detail: '1 comment',
       }),
     ]);
 
@@ -153,7 +153,7 @@ describe('buildSummary', () => {
         name: 'Tellows',
         status: 'found',
         score: 7,
-        detail: 'score 7 · 2 comments',
+        detail: '2 comments',
       }),
     ]);
 
@@ -188,7 +188,7 @@ describe('buildSummary', () => {
         name: 'Tellows',
         status: 'found',
         score: 5,
-        detail: 'score 5 · 0 comments · 1 searches',
+        detail: '0 comments · 1 search',
       }),
     ]);
 

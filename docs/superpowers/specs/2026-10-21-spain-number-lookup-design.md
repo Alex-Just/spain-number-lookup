@@ -75,7 +75,7 @@ Reject clearly if not a plausible Spain number after parse (still allow prefixes
 | 1 | ListaSpam | `https://www.listaspam.com/busca.php?Telefono={9}` | Spain spam community labels, search counts |
 | 2 | Tellows.es | Page `https://www.tellows.es/num/{9}`; optional public JSON `…/basic/num/+34{9}?json=1` | Risk score / comments |
 | 3 | Teledigo | `https://www.teledigo.com/{9}` | Original numbering assignment / operator |
-| 4 | ResponderONo | `https://www.responderono.es/numero-de-telefono/{9}` | Community rating when page exists (404 = empty) |
+| 4 | ResponderONo | `https://www.responderono.es/numero-de-telefono/{9}` | Community rating when users have rated the number (404 = empty) |
 | 5 | OpenSpam | Free web lookup on openspam.es if Worker can call without API key; else deep-link only | Spain community |
 | 6 | QuienHaLlamado | `https://www.quienhallamado.es/{9}` | Secondary comments |
 | 7 | Truecaller | `https://www.truecaller.com/search/es/{9}` | Last; often empty / login wall |

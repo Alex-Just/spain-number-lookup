@@ -15,4 +15,12 @@ describe('parseListaSpamHtml', () => {
     expect(parsed.status).toBe('found');
     expect(parsed.label).toBe('Llamadas comerciales');
   });
+
+  it('uses a singular search count', () => {
+    const parsed = parseListaSpamHtml('<p>BÚSQUEDAS</p><span>1</span>');
+    expect(parsed).toEqual({
+      status: 'found',
+      detail: '1 search on ListaSpam',
+    });
+  });
 });

@@ -118,6 +118,11 @@ describe('parseTellowsJson', () => {
     expect(parsed.detail).toContain('Estafa (1)');
   });
 
+  it('does not duplicate the score in detail', () => {
+    const parsed = parseTellowsJson(fixture);
+    expect(parsed.detail).not.toContain('score');
+  });
+
   it('uses singular counts for one comment and one search', () => {
     const parsed = parseTellowsJson(
       JSON.stringify({ tellows: { score: '6', comments: '1', searches: '1' } }),

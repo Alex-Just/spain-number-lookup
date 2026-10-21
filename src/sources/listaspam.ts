@@ -1,4 +1,5 @@
 import { SOURCE_IDS } from '../constants.ts';
+import { formatCount } from '../format.ts';
 import type { SourceResult } from '../types.ts';
 import { safeLookup, type FetchLike } from './http.ts';
 import type { SourceAdapter } from './types.ts';
@@ -34,7 +35,7 @@ export function parseListaSpamHtml(body: string): Partial<SourceResult> | null {
   if (searches?.[1] && Number(searches[1]) > 0) {
     return {
       status: 'found',
-      detail: `${searches[1]} searches on ListaSpam`,
+      detail: `${formatCount(Number(searches[1]), 'search', 'searches')} on ListaSpam`,
     };
   }
 

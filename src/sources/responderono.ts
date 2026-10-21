@@ -4,7 +4,8 @@ import { safeLookup, type FetchLike } from './http.ts';
 import type { SourceAdapter } from './types.ts';
 
 const SOURCE_NAME = 'ResponderONo';
-const RATED_AS = /m(?:á|&aacute;)s evaluado como\s+(negativa|positiva|neutral)\b([^.<]*)/i;
+const RATED_AS =
+  /m(?:á|&aacute;|&#225;|&#xe1;)s evaluado como\s+(negativa|positiva|neutral)\b([^.<]*)/i;
 
 function metaDescription(html: string): string | null {
   for (const tag of html.matchAll(/<meta\b[^>]*>/gi)) {

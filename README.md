@@ -20,7 +20,7 @@ Live demo: [spain-number-lookup.alex-just.workers.dev](https://spain-number-look
 | 1 | ListaSpam | Spam labels / search activity |
 | 2 | Tellows | Risk score JSON |
 | 3 | Teledigo | Numbering assignment / operator |
-| 4 | ResponderONo | Community rating when a page exists |
+| 4 | ResponderONo | Community rating when users have rated the number |
 | 5 | OpenSpam | Deep link (no free parse API in v1) |
 | 6 | QuienHaLlamado | Secondary community signal |
 | 7 | Truecaller | Deep link (login wall) |
