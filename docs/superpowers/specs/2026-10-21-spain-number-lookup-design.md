@@ -100,7 +100,8 @@ sources: [{ id, name, status: found|empty|failed|blocked, label?, detail?, score
 **Summary rules (builder call):**
 
 - Prefer ListaSpam commercial/spam tags when present.
-- Else Tellows score + category if comments exist.
+- Else Tellows score + category if comments exist (medium confidence).
+- Else a named Tellows owner (low confidence) beats the carrier assignment.
 - Else Teledigo operator assignment as weak “who” signal.
 - `confidence: none` when all empty/failed — headline like “No useful matches yet”.
 

@@ -73,7 +73,7 @@ describe('buildSummary', () => {
     expect(summary.sourceId).toBe('tellows');
   });
 
-  it('does not headline a zero-comment Tellows name when it is the only found source', () => {
+  it('headlines a zero-comment Tellows name with low confidence', () => {
     const summary = buildSummary([
       source({
         id: SOURCE_IDS.TELLOWS,
@@ -86,10 +86,9 @@ describe('buildSummary', () => {
       }),
     ]);
 
-    expect(summary.confidence).toBe('none');
-    expect(summary.headline.toLowerCase()).toMatch(/no useful matches/);
-    expect(summary.headline).not.toContain('PETRA');
-    expect(summary.sourceId).toBeUndefined();
+    expect(summary.confidence).toBe('low');
+    expect(summary.headline).toBe('Tellows: PETRA PARRAGA BAESA · score 2');
+    expect(summary.sourceId).toBe('tellows');
   });
 
   it('attributes another source instead of the zero-comment Tellows name', () => {
@@ -100,7 +99,6 @@ describe('buildSummary', () => {
         status: 'found',
         score: 2,
         comments: 0,
-        label: 'PETRA PARRAGA BAESA',
       }),
       source({
         id: SOURCE_IDS.RESPONDERONO,
@@ -215,6 +213,29 @@ describe('buildSummary', () => {
 
     expect(summary.confidence).toBe('none');
     expect(summary.headline.toLowerCase()).toMatch(/no useful matches/);
+  });
+
+  it('prefers a named Tellows owner over the Teledigo operator', () => {
+    const summary = buildSummary([
+      source({
+        id: SOURCE_IDS.TELLOWS,
+        name: 'Tellows',
+        status: 'found',
+        score: 2,
+        comments: 0,
+        label: 'Fontaneria Espaval',
+      }),
+      source({
+        id: SOURCE_IDS.TELEDIGO,
+        name: 'Teledigo',
+        status: 'found',
+        detail: 'Assigned to ORANGE ESPAGNE, S.A. UNIPERSONAL',
+      }),
+    ]);
+
+    expect(summary.headline).toBe('Tellows: Fontaneria Espaval · score 2');
+    expect(summary.confidence).toBe('low');
+    expect(summary.sourceId).toBe('tellows');
   });
 
   it('falls back to Teledigo operator with low confidence', () => {

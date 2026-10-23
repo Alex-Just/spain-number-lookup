@@ -48,6 +48,20 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     };
   }
 
+  // A named owner is a better "who" lead than the carrier assignment below.
+  if (tellows?.status === 'found' && tellows.label) {
+    const parts = [tellows.label];
+    if (tellows.score !== undefined) {
+      parts.push(`score ${tellows.score}`);
+    }
+    return {
+      headline: `Tellows: ${parts.join(' · ')}`,
+      confidence: 'low',
+      sourceId: SOURCE_IDS.TELLOWS,
+      notes,
+    };
+  }
+
   if (teledigo?.status === 'found' && teledigo.detail) {
     return {
       headline: teledigo.detail,
@@ -61,9 +75,9 @@ export function buildSummary(sources: SourceResult[]): LookupSummary {
     if (source.status !== 'found') {
       return false;
     }
-    // Tellows without comments is too weak to headline "who called".
+    // Score-only Tellows is too weak to headline "who called".
     if (source.id === SOURCE_IDS.TELLOWS) {
-      return tellowsHasCommunitySignal(source);
+      return Boolean(source.label) || tellowsHasCommunitySignal(source);
     }
     return true;
   });
