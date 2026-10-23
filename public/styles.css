@@ -174,13 +174,6 @@ button:disabled {
   cursor: wait;
 }
 
-.hint {
-  margin: 0.15rem 0 0;
-  color: var(--muted);
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
 .status {
   min-height: 1.25rem;
   margin: 0.35rem 0 0;

@@ -10,6 +10,7 @@ const POST_LOOKUP_MIN_CHARS = 180;
 
 const form = document.querySelector('#lookup-form');
 const input = document.querySelector('#number-input');
+const leadEl = document.querySelector('#lookup-lead');
 const submit = document.querySelector('#lookup-button');
 const statusEl = document.querySelector('#status');
 const resultEl = document.querySelector('#result');
@@ -27,6 +28,10 @@ function setStatus(message, isError = false, isLoading = false) {
   statusEl.textContent = message;
   statusEl.classList.toggle('error', isError);
   statusEl.classList.toggle('loading', isLoading);
+}
+
+function syncLead() {
+  leadEl.hidden = input.value.trim() !== '';
 }
 
 function readShareFields() {
@@ -172,6 +177,7 @@ async function requestLookup(payload) {
     return;
   }
 
+  leadEl.hidden = true;
   submit.disabled = true;
   resultEl.classList.remove('visible');
   setStatus('Checking free Spain sources…', false, true);
@@ -219,17 +225,21 @@ form.addEventListener('submit', (event) => {
   requestLookup(input.value);
 });
 
+input.addEventListener('input', syncLead);
+syncLead();
+
 const shareFields = readShareFields();
 const sharedPreview = previewShareInput(shareFields);
 if (sharedPreview) {
   input.value = sharedPreview;
+  syncLead();
   requestLookup(shareFields);
 }
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {
-      /* install tip still works without SW */
+      /* ignore registration failures */
     });
   });
 }
